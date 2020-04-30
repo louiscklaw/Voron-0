@@ -8,8 +8,36 @@ cache:
   directories:
   - travis_cache
 
-before_install:
-  - chmod +x ./travis_scripts/ci-build.sh
-  - npm install remark-cli remark-validate-links
+jobs:
+  include:
+    - stage: Testing
+      name: travis-freecad-checking
 
-script: ./travis_scripts/ci-build.sh
+      before_script:
+        - sudo add-apt-repository -y ppa:freecad-maintainers/freecad-stable
+        - sudo apt-get update
+        - sudo apt-get install -y freecad freecad-python3
+        - sudo mkdir /usr/lib/freecad-python3/Mod
+
+      script:
+        - for i in $(find . -name '*.FCStd'); do python3 travis-freecad-checking/freecad_open_test.py $i; done
+
+        # use case
+        - mkdir .travis
+        - wget https://raw.githubusercontent.com/louiscklaw/travis-playlist/master/travis-freecad-checking/freecad_open_test.py -O .travis/freecad_open_test.py
+        - for i in $(find . -name '*.FCStd'); do python3 .travis/freecad_open_test.py $i; done
+
+    - stage: Testing
+      name: origional-voron-testing
+      before_install:
+        - chmod +x ./travis_scripts/ci-build.sh
+        - npm install remark-cli remark-validate-links
+
+      script: ./travis_scripts/ci-build.sh
+
+
+    - stage: Merging
+      name: merge-to-master
+      script:
+        - wget https://raw.githubusercontent.com/louiscklaw/travis-playlist/master/travis-build-merger/merge_if_success_test.sh
+        - bash merge_if_success_test.sh | tee merge.log
