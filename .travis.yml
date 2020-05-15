@@ -8,12 +8,19 @@ cache:
   directories:
   - travis_cache
 
+
 import:
   - credentials.yml
+  - .travis-merger.yml
+
+
+stages:
+  - Test
+  - Merge
 
 jobs:
   include:
-    - stage: Testing
+    - stage: Test
       name: travis-freecad-checking
 
       before_script:
@@ -28,17 +35,10 @@ jobs:
         - wget https://raw.githubusercontent.com/louiscklaw/travis-playlist/master/travis-freecad-checking/freecad_open_test.py -O .travis/freecad_open_test.py
         - for i in $(find . -name '*.FCStd'); do python3 .travis/freecad_open_test.py $i; done
 
-    - stage: Testing
+    - stage: Test
       name: origional-voron-testing
       before_install:
         - chmod +x ./travis_scripts/ci-build.sh
         - npm install remark-cli remark-validate-links
 
       script: ./travis_scripts/ci-build.sh
-
-
-    - stage: Merging
-      name: merge-to-master
-      script:
-        - wget https://raw.githubusercontent.com/louiscklaw/travis-playlist/master/travis-build-merger/merge_if_success.sh
-        - bash merge_if_success.sh | tee merge.log
